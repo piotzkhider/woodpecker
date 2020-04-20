@@ -66,7 +66,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 				return events.APIGatewayProxyResponse{}, ErrThreadMessage
 			}
 
-			if ev.SubType != "" {
+			if ev.SubType != "" && ev.SubType != "file_share" {
 				return events.APIGatewayProxyResponse{}, ErrHasSubType
 			}
 
