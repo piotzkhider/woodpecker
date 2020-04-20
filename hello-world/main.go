@@ -17,6 +17,7 @@ var (
 	ErrNotTimesChannel  = errors.New("not times channel")
 	ErrBotMessage       = errors.New("sent by bot")
 	ErrThreadMessage    = errors.New("thread")
+	ErrHasSubType       = errors.New("message has subtype")
 
 	Token             = os.Getenv("TOKEN")
 	VerificationToken = os.Getenv("VERIFICATION_TOKEN")
@@ -63,6 +64,10 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 			if ev.ThreadTimeStamp != "" {
 				return events.APIGatewayProxyResponse{}, ErrThreadMessage
+			}
+
+			if ev.SubType != "" {
+				return events.APIGatewayProxyResponse{}, ErrHasSubType
 			}
 
 			channel, _ := api.GetConversationInfo(ev.Channel, false)
