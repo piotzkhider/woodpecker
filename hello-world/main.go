@@ -5,6 +5,9 @@ import (
 	"errors"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"log"
@@ -19,12 +22,32 @@ var (
 	ErrThreadMessage    = errors.New("thread")
 	ErrHasSubType       = errors.New("message has subtype")
 
-	Token             = os.Getenv("TOKEN")
-	VerificationToken = os.Getenv("VERIFICATION_TOKEN")
-	TimelineChannel   = os.Getenv("TIMELINE_CHANNEL")
+	TimelineChannel = os.Getenv("TIMELINE_CHANNEL")
+
+	VerificationToken string
+	Token             string
+	api               *slack.Client
 )
 
-var api = slack.New(Token)
+func init() {
+	svc := ssm.New(session.Must(session.NewSession()))
+
+	verificationOutput, _ := svc.GetParameter(&ssm.GetParameterInput{
+		Name:           aws.String("Woodpecker-VerificationToken"),
+		WithDecryption: aws.Bool(true),
+	})
+
+	VerificationToken = *verificationOutput.Parameter.Value
+
+	var tokenOutput, _ = svc.GetParameter(&ssm.GetParameterInput{
+		Name:           aws.String("Woodpecker-Token"),
+		WithDecryption: aws.Bool(true),
+	})
+
+	Token = *tokenOutput.Parameter.Value
+
+	api = slack.New(Token)
+}
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	eventsAPIEvent, err := slackevents.ParseEvent(

@@ -2,13 +2,17 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   woodpecker
-  
+
   Sample SAM Template for woodpecker
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 5
+
+Parameters:
+  TimelineChannel:
+    Type: String
 
 Resources:
   HelloWorldFunction:
@@ -17,7 +21,9 @@ Resources:
       CodeUri: hello-world/
       Handler: hello-world
       Runtime: go1.x
-      Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
+      Policies:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
       Events:
         CatchAll:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -26,9 +32,13 @@ Resources:
             Method: POST
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          TOKEN: YOUR_BOT_TOKEN
-          VERIFICATION_TOKEN: YOUR_VERIFICATION_TOKEN
-          TIMELINE_CHANNEL: YOUR_TIMELINE_CHANNEL_ID
+          TIMELINE_CHANNEL: !Ref TimelineChannel
+
+  HelloWorldFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${HelloWorldFunction}
+      RetentionInDays: 7
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
